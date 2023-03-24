@@ -11,24 +11,25 @@ import time, datetime
 import cv2 as cv
 from pytesseract import image_to_string
 import os
+from selenium.webdriver.support.ui import Select
 
 opt = webdriver.ChromeOptions()
 opt.add_argument('window-size=800,600')
 driver = webdriver.Chrome(executable_path=os.getcwd() + "\\es\\chromedriver.exe", options=opt)
 wait = WebDriverWait(driver, 10)
-url = "https://ticket.interpark.com/Gate/TPLogin.asp"
+url = "https://www.globalinterpark.com/user/signin"
 driver.get(url)
 
 
 def login_go():
-    driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
-    driver.find_element_by_name('userId').send_keys(id_entry.get())
-    driver.find_element_by_id('userPwd').send_keys(pw_entry.get())
-    driver.find_element_by_id('btn_login').click()
+    # driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
+    driver.find_element(By.ID, 'memEmail').send_keys(id_entry.get())
+    driver.find_element(By.ID, 'memPass').send_keys(pw_entry.get())
+    driver.find_element(By.ID, 'sign_in').click()
 
 
 def link_go():
-    driver.get('http://poticket.interpark.com/Book/BookSession.asp?GroupCode=' + showcode_entry.get())
+    driver.get('https://www.globalinterpark.com/detail/edetail?prdNo=' + showcode_entry.get() + '&dispNo=01003')  
 
 
 def link_test():
@@ -171,7 +172,7 @@ def captcha():
 def date_select():
     # 날짜
     while True:
-        driver.switch_to.frame(driver.find_element_by_id('ifrmBookStep'))
+        driver.switch_to.frame(driver.find_element(By.ID, 'play_date'))
         if int(calender_entry.get()) == 0:
             pass
         elif int(calender_entry.get()) >= 1:
@@ -223,29 +224,46 @@ def go2():
         except ElementNotInteractableException:
             break
 def go():
+    # 等待并定位 iframe
+    wait = WebDriverWait(driver, 30)
+    iframe_element = wait.until(EC.presence_of_element_located((By.ID, "product_detail_area")))
+
+    # 切换到 iframe
+    driver.switch_to.frame(iframe_element)
     code_time.delete(0, END)
     start_time = time.time()
+    driver.switch_to.frame(driver.find_element(By.ID, 'product_detail_area'))
     try:
-        print("가")
-        driver.find_element_by_class_name('closeBtn').click()
-        date_select()
-        try:
-            print("나")
-            captcha()
-        except NoSuchElementException:
-            print("다")
-            go2()
+        date_select_element = driver.find_element(By.ID, "play_date")
     except NoSuchElementException:
-        print("라")
-        date_select()
-        try:
-            print("마")
-            captcha()
-        except NoSuchElementException:
-            print("바")
-            go2()
-    except UnexpectedAlertPresentException:
-        all_go()
+        print("Element with ID 'play_date' not found")
+    date_select = Select(date_select_element)
+    date_value = date_entry
+    try:
+        date_select.select_by_value(date_value)
+    except NoSuchElementException:
+        print(f"No option found with value {date_value}")
+    # try:
+    #     print("A")
+    #     driver.find_element(By., 'play_date').click()
+    #     date_select()
+    #     try:
+    #         print("B")
+    #         captcha()
+    #     except NoSuchElementException:
+    #         print("C")
+    #         go2()
+    # except NoSuchElementException:
+    #     print("D")
+    #     date_select()
+    #     try:
+    #         print("E")
+    #         captcha()
+    #     except NoSuchElementException:
+    #         print("F")
+    #         go2()
+    # except UnexpectedAlertPresentException:
+    #     all_go()
     finally:
         code_time.insert(0, "%s 초" % round((time.time() - start_time), 3))
 
@@ -320,81 +338,81 @@ dp.geometry('300x450')
 dp.title("인터파크 티켓팅 프로그램")
 main_frame.pack()
 
-id_label = Label(main_frame, text="아이디")
+id_label = Label(main_frame, text="帳號")
 id_label.grid(row=1, column=0)
 
 id_entry = Entry(main_frame)
 id_entry.grid(row=1, column=1)
 
-pw_label = Label(main_frame, text="비밀번호")
+pw_label = Label(main_frame, text="密碼")
 pw_label.grid(row=2, column=0)
 
 pw_entry = Entry(main_frame)
 pw_entry.grid(row=2, column=1)
 
-login_button = Button(main_frame, text="로그인", command=login_go, height=2)
+login_button = Button(main_frame, text="登入", command=login_go, height=2)
 login_button.grid(row=3, column=1)
 
-showcode_label = Label(main_frame, text="공연번호")
+showcode_label = Label(main_frame, text="演唱會編號")
 showcode_label.grid(row=4, column=0)
 
 showcode_entry = Entry(main_frame)
 showcode_entry.grid(row=4, column=1)
 
-calendar_label = Label(main_frame, text="달력")
+calendar_label = Label(main_frame, text="日歷")
 calendar_label.grid(row=5, column=0)
 
 calender_entry = Entry(main_frame)
 calender_entry.grid(row=5, column=1)
 
-date_label = Label(main_frame, text="날짜")
+date_label = Label(main_frame, text="日期")
 date_label.grid(row=6, column=0)
 
 date_entry = Entry(main_frame)
 date_entry.grid(row=6, column=1)
 
-round_label = Label(main_frame, text="회차")
+round_label = Label(main_frame, text="場次")
 round_label.grid(row=7, column=0)
 
 round_entry = Entry(main_frame)
 round_entry.grid(row=7, column=1)
 
-ticket_label = Label(main_frame, text="티켓 수")
+ticket_label = Label(main_frame, text="票數")
 ticket_label.grid(row=8, column=0)
 
 ticket_entry = Entry(main_frame)
 ticket_entry.grid(row=8, column=1)
 
-link_button = Button(main_frame, text="직링", command=link_go, height=2)
+link_button = Button(main_frame, text="直接連結", command=link_go, height=2)
 link_button.grid(row=9, column=0, sticky=E)
 
-all_button = Button(main_frame, text='시작', command=all_go, height=2)
+all_button = Button(main_frame, text='開始', command=all_go, height=2)
 all_button.grid(row=9, column=1, sticky=W + E)
 
-chair_button = Button(main_frame, text="좌석", command=go2, height=2)
+chair_button = Button(main_frame, text="座位", command=go2, height=2)
 chair_button.grid(row=9, column=2, sticky=W)
 
-start_button = Button(main_frame, text="직좌", command=go, height=2)
+start_button = Button(main_frame, text="直接選座", command=go, height=2)
 start_button.grid(row=10, column=0, sticky=E)
 
-credit_button = Button(main_frame, text="결제", command=credit, height=2)
+credit_button = Button(main_frame, text="付款", command=credit, height=2)
 credit_button.grid(row=10, column=1, sticky=W + E)
 
-captcha_button = Button(main_frame, text='캡챠', command=captcha, height=2)
+captcha_button = Button(main_frame, text='驗證碼', command=captcha, height=2)
 captcha_button.grid(row=10, column=2, sticky=W)
 
 bank_var = IntVar(value=0)
-bank_check = Checkbutton(main_frame, text='무통장', variable=bank_var)
+bank_check = Checkbutton(main_frame, text='無銀行帳戶轉帳', variable=bank_var)
 bank_check.grid(row=9, column=3)
 
 kakao_var = IntVar(value=0)
-kakao_check = Checkbutton(main_frame, text='카카오', variable=kakao_var)
+kakao_check = Checkbutton(main_frame, text='KakaoPay', variable=kakao_var)
 kakao_check.grid(row=10, column=3)
 
-credit2_button = Button(main_frame, text="자동 예매", command=full_auto, height=2)
+credit2_button = Button(main_frame, text="自動預訂", command=full_auto, height=2)
 credit2_button.grid(row=12, column=1, sticky=N)
 
-full_label = Label(main_frame, text="예매 시간")
+full_label = Label(main_frame, text="預訂時間")
 full_label.grid(row=13, column=0)
 
 full_entry = Entry(main_frame)
@@ -403,13 +421,13 @@ full_entry.grid(row=13, column=1)
 time_label = Label(main_frame, height=2)
 time_label.grid(row=14, column=1)
 
-birth_label = Label(main_frame, text='생년월일')
+birth_label = Label(main_frame, text='生日')
 birth_label.grid(row=15, column=0)
 
 birth_entry = Entry(main_frame)
 birth_entry.grid(row=15, column=1)
 
-code_label = Label(main_frame, text='소요시간')
+code_label = Label(main_frame, text='所需時間')
 code_label.grid(row=16, column=0)
 
 code_time = Entry(main_frame)
